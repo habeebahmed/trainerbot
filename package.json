@@ -1,0 +1,20 @@
+{
+  "name": "gre_trainer_bot",
+  "version": "1.0.0",
+  "description": "test your skills",
+  "scripts": {
+    "watch": "nodemon ./start.js --ignore public/",
+    "start": " \"npm run watch\""
+  },
+  "keywords": [
+    "GRE"
+  ],
+  "author": "HM15",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "dotenv": "^5.0.0",
+    "express": "^4.16.2",
+    "request": "^2.83.0"
+  }
+}
