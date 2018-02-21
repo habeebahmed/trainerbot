@@ -2,6 +2,14 @@ const request = require('request');
 require('dotenv').config({
   path: 'variables.env'
 });
+const word = require('../word');
+var rounds = 0;
+var a=[];
+var b=[0,1,2,3];
+function getRandomInt(max) {
+  return Math.floor(Math.random() * Math.floor(max));
+}
+
 
 function receivedMessage(event) {
   var senderID = event.sender.id;
@@ -46,8 +54,7 @@ function receivedMessage(event) {
     switch (messageText.replace(/[^\w\s]/gi, '').trim().toLowerCase()) {
       case 'hello':
       case 'hi':
-        sendQuickReply(senderID)
-        //sendHiMessage(senderID);
+        sendHiMessage(senderID);
         break;
       case 'start':
         sendButtonMessage(senderID)
@@ -89,43 +96,71 @@ function receivedPostback(event) {
   // button for Structured Messages.
   //  var payload = event.postback.payload;
 
-  if (event.postback.payload === 'PAYLOAD:get_started') {
-    sendHiMessage(senderID)
+  if (event.postback.payload === 'PAYLOAD:10') {
+    rounds = 10
+    sendTextMessage(senderID,'challenge of 10 questions selected')
+    word.words().then(value =>{
+      //console.log(value.data)
+      a[0] = value.data;
+      a[0].flag = false;
+      //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+      word.words().then(value =>{
+        //console.log(value.data)
+        a[1] = value.data;
+        a[1].flag = false;
+        //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+        word.words().then(value =>{
+          //console.log(value.data)
+          a[2] = value.data;
+          a[2].flag = false;
+          //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+          word.words().then(value =>{
+            //console.log(value.data)
+            a[3] = value.data;
+            a[3].flag = false;
+            //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+            var correct = getRandomInt(4);
+            console.log(correct);
+            let i = 0
+            while(b != undefined){
+            if(correct === b[i]){
+              let temp = b[i];
+              b[0] = temp;
+              b[i] = 0;
+              break;
+            }
+            else{
+                i++;
+            }
+            }
+            a[correct].flag = true;
+            console.log(a);
+            console.log(b);
+            sendQuickReply(senderID,a,b)
+          })
+        })
+
+      })
+
+    })
   }
-  if (event.postback.payload === 'PAYLOAD:tech_news') {
-    news_tech(senderID)
+  if (event.postback.payload === 'PAYLOAD:20') {
+    rounds = 20
+    sendTextMessage(senderID,'challenge of 20 questions selected')
+    sendQuickReply(senderID)
+
+
   }
-  if (event.postback.payload === 'PAYLOAD:sport_news') {
-    news_sport(senderID)
-  }
-  if (event.postback.payload === 'PAYLOAD:enter_news') {
-    news_enter(senderID)
-  }
-  if (event.postback.payload === 'PAYLOAD:gen_news') {
-    news_gen(senderID)
-  }
-  if (event.postback.payload === 'PAYLOAD:bus_news') {
-    news_bus(senderID)
-  }
-  if (event.postback.payload === 'PAYLOAD:science_news') {
-    news_science(senderID)
-  }
+
 
 
 }
 
-/*
- * Message Read Event
- *
- * This event is called when a previously-sent message has been read.
- * https://developers.facebook.com/docs/messenger-platform/webhook-reference/message-read
- *
- */
+
 function receivedMessageRead(event) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
 
-  // All messages before watermark (a timestamp) or sequence have been seen.
   var watermark = event.read.watermark;
   var sequenceNumber = event.read.seq;
 
@@ -133,14 +168,6 @@ function receivedMessageRead(event) {
     "number %d", watermark, sequenceNumber);
 }
 
-/*
- * Account Link Event
- *
- * This event is called when the Link Account or UnLink Account action has been
- * tapped.
- * https://developers.facebook.com/docs/messenger-platform/webhook-reference/account-linking
- *
- */
 function receivedAccountLink(event) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
@@ -170,36 +197,35 @@ function sendHiMessage(recipientId) {
   callSendAPI(messageData);
 }
 
-function sendQuickReply(recipientId) {
+function sendQuickReply(recipientId,value,arr) {
+  console.log(value);
+  console.log(arr);
+  console.log(value[arr[0]].word);
+  console.log(value[arr[0]].results[0].definition);
   var messageData = {
     recipient: {
       id: recipientId
     },
     message: {
-      "text": "Here is a quick reply!",
+      "text": value[arr[0]].results[0].definition,
       "quick_replies": [{
         "content_type": "text",
-        "title": "Search",
+        "title": value[arr[0]].word,
         "payload": "<POSTBACK_PAYLOAD>",
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
       },{
         "content_type": "text",
-        "title": "Search",
+        "title": value[arr[1]].word,
         "payload": "<POSTBACK_PAYLOAD>",
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
       },{
         "content_type": "text",
-        "title": "Search",
+        "title": value[arr[2]].word,
         "payload": "<POSTBACK_PAYLOAD>",
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
       },{
         "content_type": "text",
-        "title": "Search",
-        "payload": "<POSTBACK_PAYLOAD>",
-        "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
-      },{
-        "content_type": "text",
-        "title": "Search",
+        "title": value[arr[3]].word,
         "payload": "<POSTBACK_PAYLOAD>",
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
       }]
@@ -208,10 +234,7 @@ function sendQuickReply(recipientId) {
     callSendAPI(messageData);
   }
 
-  /*
-   * Send a text message using the Send API.
-   *
-   */
+
   function sendTextMessage(recipientId, messageText) {
     var messageData = {
       recipient: {
@@ -241,11 +264,11 @@ function sendQuickReply(recipientId) {
             "buttons": [{
                 "type": "postback",
                 "title": "Beginner(10)😎",
-                "payload": "PAYLOAD:tech_news"
+                "payload": "PAYLOAD:10"
               }, {
                 "type": "postback",
                 "title": "Professional(20)😈",
-                "payload": "PAYLOAD:sport_news"
+                "payload": "PAYLOAD:20"
               }
             ]
           }
