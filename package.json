@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "test your skills",
   "scripts": {
-    "watch": "nodemon ./start.js --ignore public/",
-    "start": " \"npm run watch\""
+
+    "start": "nodemon start.js"
   },
   "keywords": [
     "GRE"

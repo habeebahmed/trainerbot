@@ -4,8 +4,10 @@ require('dotenv').config({
 });
 const word = require('../word');
 var rounds = 0;
-var a=[];
-var b=[0,1,2,3];
+var correct = undefined;
+var a = [];
+var b = [0, 1, 2, 3];
+
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
@@ -40,8 +42,27 @@ function receivedMessage(event) {
     var quickReplyPayload = quickReply.payload;
     console.log("Quick reply for message %s with payload %s",
       messageId, quickReplyPayload);
+    console.log("rounds:" + rounds);
+    if (quickReplyPayload === 'PAYLOAD:true') {
+      sendTextMessage(senderID, "correct")
+    } else {
+      //sendTextMessage(senderID,"wrong")
+      console.log(a);
+      console.log(correct);
+      console.log(a[correct].word);
 
-    sendTextMessage(senderID, "Quick reply tapped");
+      //let msg = "correct answer is "+a[correct].word
+      sendTextMessage(senderID, "correct answer is " + a[correct].word)
+    }
+    if(rounds != 0)
+    sendToQuickReply(event)
+    else if(rounds == 0){
+      sendTextMessage(senderID,"completed")
+
+    }
+
+    --rounds;
+    //sendTextMessage(senderID, "Quick reply tapped");
     return;
   }
 
@@ -97,63 +118,62 @@ function receivedPostback(event) {
   //  var payload = event.postback.payload;
 
   if (event.postback.payload === 'PAYLOAD:10') {
-    rounds = 10
-    sendTextMessage(senderID,'challenge of 10 questions selected')
-    word.words().then(value =>{
-      //console.log(value.data)
-      a[0] = value.data;
-      a[0].flag = false;
-      //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
-      word.words().then(value =>{
-        //console.log(value.data)
-        a[1] = value.data;
-        a[1].flag = false;
-        //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
-        word.words().then(value =>{
-          //console.log(value.data)
-          a[2] = value.data;
-          a[2].flag = false;
-          //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
-          word.words().then(value =>{
-            //console.log(value.data)
-            a[3] = value.data;
-            a[3].flag = false;
-            //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
-            var correct = getRandomInt(4);
-            console.log(correct);
-            let i = 0
-            while(b != undefined){
-            if(correct === b[i]){
-              let temp = b[i];
-              b[0] = temp;
-              b[i] = 0;
-              break;
-            }
-            else{
-                i++;
-            }
-            }
-            a[correct].flag = true;
-            console.log(a);
-            console.log(b);
-            sendQuickReply(senderID,a,b)
-          })
-        })
+    rounds = 9
+    console.log("rounds in postback"+rounds);
 
-      })
+    sendTextMessage(senderID, 'challenge of 10 questions selected')
+        sendToQuickReply(event)
 
-    })
-  }
+
+
+    }
+
   if (event.postback.payload === 'PAYLOAD:20') {
-    rounds = 20
-    sendTextMessage(senderID,'challenge of 20 questions selected')
+    rounds = 19
+    sendTextMessage(senderID, 'challenge of 20 questions selected')
     sendQuickReply(senderID)
 
 
   }
+}
 
 
+function sendToQuickReply(event){
 
+senderID = event.sender.id;
+
+
+  word.words().then(value => {
+    //console.log(value.data)
+    a[0] = value.data;
+    a[0].flag = false;
+    //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+    word.words().then(value => {
+      //console.log(value.data)
+      a[1] = value.data;
+      a[1].flag = false;
+      //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+      word.words().then(value => {
+        //console.log(value.data)
+        a[2] = value.data;
+        a[2].flag = false;
+        //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+        word.words().then(value => {
+          //console.log(value.data)
+          a[3] = value.data;
+          a[3].flag = false;
+          //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
+          correct = getRandomInt(4);
+          console.log(correct);
+          a[correct].flag = true;
+          console.log(a);
+          console.log(b);
+          sendQuickReply(senderID, a, correct)
+        })
+      })
+
+    })
+})
 }
 
 
@@ -197,120 +217,121 @@ function sendHiMessage(recipientId) {
   callSendAPI(messageData);
 }
 
-function sendQuickReply(recipientId,value,arr) {
+function sendQuickReply(recipientId, value, c) {
   console.log(value);
-  console.log(arr);
-  console.log(value[arr[0]].word);
-  console.log(value[arr[0]].results[0].definition);
+//  console.log(arr);
+  console.log(c);
+  console.log(value[c].word);
+  console.log(value[c].results[0].definition);
   var messageData = {
     recipient: {
       id: recipientId
     },
     message: {
-      "text": value[arr[0]].results[0].definition,
+      "text": value[c].results[0].definition,
       "quick_replies": [{
         "content_type": "text",
-        "title": value[arr[0]].word,
-        "payload": "<POSTBACK_PAYLOAD>",
+        "title": value[0].word,
+        "payload": "PAYLOAD:" + value[0].flag,
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
-      },{
+      }, {
         "content_type": "text",
-        "title": value[arr[1]].word,
-        "payload": "<POSTBACK_PAYLOAD>",
+        "title": value[1].word,
+        "payload": "PAYLOAD:" + value[1].flag,
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
-      },{
+      }, {
         "content_type": "text",
-        "title": value[arr[2]].word,
-        "payload": "<POSTBACK_PAYLOAD>",
+        "title": value[2].word,
+        "payload": "PAYLOAD:" + value[2].flag,
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
-      },{
+      }, {
         "content_type": "text",
-        "title": value[arr[3]].word,
-        "payload": "<POSTBACK_PAYLOAD>",
+        "title": value[3].word,
+        "payload": "PAYLOAD:" + value[3].flag,
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
       }]
     }
   }
-    callSendAPI(messageData);
-  }
+  callSendAPI(messageData);
+}
 
 
-  function sendTextMessage(recipientId, messageText) {
-    var messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        text: messageText,
-        metadata: "DEVELOPER_DEFINED_METADATA"
-      }
-    };
+function sendTextMessage(recipientId, messageText) {
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      text: messageText,
+      metadata: "DEVELOPER_DEFINED_METADATA"
+    }
+  };
 
-    callSendAPI(messageData);
-  }
+  callSendAPI(messageData);
+}
 
-  function sendButtonMessage(recipientId) {
-    var messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
+function sendButtonMessage(recipientId) {
 
-        "attachment": {
-          "type": "template",
-          "payload": {
-            "template_type": "button",
-            "text": "Choose from below challenges",
-            "buttons": [{
-                "type": "postback",
-                "title": "Beginner(10)😎",
-                "payload": "PAYLOAD:10"
-              }, {
-                "type": "postback",
-                "title": "Professional(20)😈",
-                "payload": "PAYLOAD:20"
-              }
-            ]
-          }
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+
+      "attachment": {
+        "type": "template",
+        "payload": {
+          "template_type": "button",
+          "text": "Choose from below challenges",
+          "buttons": [{
+            "type": "postback",
+            "title": "Beginner(10)😎",
+            "payload": "PAYLOAD:10"
+          }, {
+            "type": "postback",
+            "title": "Professional(20)😈",
+            "payload": "PAYLOAD:20"
+          }]
         }
       }
-    };
+    }
+  };
 
-    callSendAPI(messageData);
-  }
+  callSendAPI(messageData);
+}
 
 
-  function callSendAPI(messageData) {
-    request({
-      uri: 'https://graph.facebook.com/v2.6/me/messages',
-      qs: {
-        access_token: process.env.token
-      },
-      method: 'POST',
-      json: messageData
+function callSendAPI(messageData) {
+  request({
+    uri: 'https://graph.facebook.com/v2.6/me/messages',
+    qs: {
+      access_token: process.env.token
+    },
+    method: 'POST',
+    json: messageData
 
-    }, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var recipientId = body.recipient_id;
-        var messageId = body.message_id;
+  }, function(error, response, body) {
+    if (!error && response.statusCode == 200) {
+      var recipientId = body.recipient_id;
+      var messageId = body.message_id;
 
-        if (messageId) {
-          console.log("Successfully sent message with id %s to recipient %s",
-            messageId, recipientId);
-        } else {
-          console.log("Successfully called Send API for recipient %s",
-            recipientId);
-        }
+      if (messageId) {
+        console.log("Successfully sent message with id %s to recipient %s",
+          messageId, recipientId);
       } else {
-        console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+        console.log("Successfully called Send API for recipient %s",
+          recipientId);
       }
-    });
-  }
+    } else {
+      console.error("Failed calling Send API", response.statusCode, response.statusMessage, body.error);
+    }
+  });
+}
 
 
 
-  module.exports.receivedMessage = receivedMessage
-  module.exports.receivedPostback = receivedPostback
-  module.exports.receivedDeliveryConfirmation = receivedDeliveryConfirmation
-  module.exports.receivedAccountLink = receivedAccountLink
-  module.exports.receivedMessageRead = receivedMessageRead
+module.exports.receivedMessage = receivedMessage
+module.exports.receivedPostback = receivedPostback
+module.exports.receivedDeliveryConfirmation = receivedDeliveryConfirmation
+module.exports.receivedAccountLink = receivedAccountLink
+module.exports.receivedMessageRead = receivedMessageRead
