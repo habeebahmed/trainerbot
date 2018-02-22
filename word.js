@@ -1,10 +1,9 @@
 const axios = require('axios');
 var value;
 require('dotenv').config({ path: 'variables.env'});
-
+var response
 var words = async ()=>{
-
-var response = await axios.get('https://wordsapiv1.p.mashape.com/words/?random=true&hasDetails=examples', {
+response = await axios.get('https://wordsapiv1.p.mashape.com/words/?random=true&hasDetails=synonyms', {
       headers: {
         'X-Mashape-Key': process.env.MashapeKey,
         'X-Mashape-Host': process.env.MashapeHost
@@ -14,5 +13,10 @@ var response = await axios.get('https://wordsapiv1.p.mashape.com/words/?random=t
   return response
 
     }
-  
+/*words().then(value =>{
+  console.log(value.data);
+  console.log(value.data.results[0].synonyms);
+})*/
+
+
 module.exports.words = words

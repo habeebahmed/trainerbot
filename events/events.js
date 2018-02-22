@@ -6,7 +6,7 @@ const word = require('../word');
 var rounds = 0;
 var correct = undefined;
 var a = [];
-var b = [0, 1, 2, 3];
+score = 0;
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
@@ -44,20 +44,26 @@ function receivedMessage(event) {
       messageId, quickReplyPayload);
     console.log("rounds:" + rounds);
     if (quickReplyPayload === 'PAYLOAD:true') {
+      score++
       sendTextMessage(senderID, "correct")
     } else {
       //sendTextMessage(senderID,"wrong")
       console.log(a);
       console.log(correct);
       console.log(a[correct].word);
-
-      //let msg = "correct answer is "+a[correct].word
+      if(a[1].correct === true){
+        sendTextMessage(senderID, "correct answer is " + a[1].results[0].synonyms[0])
+      }else{
+        //let msg = "correct answer is "+a[correct].word
       sendTextMessage(senderID, "correct answer is " + a[correct].word)
+    }
     }
     if(rounds != 0)
     sendToQuickReply(event)
     else if(rounds == 0){
       sendTextMessage(senderID,"completed")
+      sendTextMessage(senderID,"Your score is : "+score)
+
 
     }
 
@@ -119,10 +125,10 @@ function receivedPostback(event) {
 
   if (event.postback.payload === 'PAYLOAD:10') {
     rounds = 9
-    console.log("rounds in postback"+rounds);
+    //console.log("rounds in postback"+rounds);
 
     sendTextMessage(senderID, 'challenge of 10 questions selected')
-        sendToQuickReply(event)
+    sendToQuickReply(event)
 
 
 
@@ -152,6 +158,9 @@ senderID = event.sender.id;
       //console.log(value.data)
       a[1] = value.data;
       a[1].flag = false;
+      a[1].word = a[0].word;
+      a[1].results = a[0].results;
+      a[1].correct = false;
       //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
       word.words().then(value => {
         //console.log(value.data)
@@ -166,8 +175,10 @@ senderID = event.sender.id;
           correct = getRandomInt(4);
           console.log(correct);
           a[correct].flag = true;
+          if(correct === 1){
+            a[1].correct = true;
+          }
           console.log(a);
-          console.log(b);
           sendQuickReply(senderID, a, correct)
         })
       })
@@ -228,7 +239,7 @@ function sendQuickReply(recipientId, value, c) {
       id: recipientId
     },
     message: {
-      "text": value[c].results[0].definition,
+      "text": "Definition:"+value[c].results[0].definition+"\n\nChoose from below words:",
       "quick_replies": [{
         "content_type": "text",
         "title": value[0].word,
@@ -236,7 +247,7 @@ function sendQuickReply(recipientId, value, c) {
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
       }, {
         "content_type": "text",
-        "title": value[1].word,
+        "title": value[1].results[0].synonyms[0],
         "payload": "PAYLOAD:" + value[1].flag,
         "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Red.svg/2000px-Red.svg.png"
       }, {

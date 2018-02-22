@@ -4,7 +4,8 @@
   "description": "test your skills",
   "scripts": {
 
-    "start": "nodemon start.js"
+    "watch": "nodemon ./start.js --ignore public/",
+    "start": " \"npm run watch\" "
   },
   "keywords": [
     "GRE"

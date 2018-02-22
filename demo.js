@@ -1,13 +1,9 @@
 const word = require('./word');
-var a=[];
-var i=0;
-var b = [0,1,2,3];
-console.log(b);
+var a = [];
+
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
-start:
-while(true){
 
 word.words().then(value =>{
   //console.log(value.data)
@@ -19,6 +15,10 @@ word.words().then(value =>{
     //console.log(value.data)
     a[1] = value.data;
     a[1].flag = false
+    a[1].word = a[0].word;
+    a[1].results = a[0].results;
+    a[1].correct = false;
+    //console.log(a[1].results[0].synonyms[0]);
     //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
     word.words().then(value =>{
       //console.log(value.data)
@@ -32,21 +32,15 @@ word.words().then(value =>{
         //sendQuickReply(senderID,value.data.word,value.data.results[0].definition)
         var correct = getRandomInt(4);
         a[correct].flag = true;
+        if(correct === 1){
+          a[1].correct = true;
+        }
         console.log(correct);
         console.log(a);
       })
     })
-
   })
-
 })
-i++;
-if (i < 3){
-  continue start
-}
-else{
-  break;
-}
 
-}
+
 //console.log(a);
