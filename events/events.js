@@ -7,12 +7,34 @@ var rounds = 0;
 var correct = undefined;
 var a = [];
 score = 0;
+var first_name;
+var last_name;
 
 function getRandomInt(max) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
+function addGetStarted() {
 
+  request({
+     url: 'https://graph.facebook.com/v2.6/me/messenger_profile',
+     qs: { access_token: process.env.token},
+     method: 'POST',
+     json:{
+   "get_started":{
+     "payload":"PAYLOAD:get_started"
+    }
+  }
+ }, function(error, response, body) {
+     //console.log("Add persistent menu " +body.first_name)
+     if (error) {
+         console.log('Error sending messages: ', error)
+     } else if (response.body.error) {
+         console.log('Error: ', response.body.error)
+     }
+ })
+
+}
 function receivedMessage(event) {
   var senderID = event.sender.id;
   var recipientID = event.recipient.id;
@@ -61,8 +83,11 @@ function receivedMessage(event) {
     if(rounds != 0)
     sendToQuickReply(event)
     else if(rounds == 0){
-      sendTextMessage(senderID,"completed")
-      sendTextMessage(senderID,"Your score is : "+score)
+      setTimeout(function(){
+        sendTextMessage(senderID,"completed")
+        sendTextMessage(senderID,"Your score is : "+score)
+        }, 1000);
+
 
 
     }
@@ -81,7 +106,9 @@ function receivedMessage(event) {
     switch (messageText.replace(/[^\w\s]/gi, '').trim().toLowerCase()) {
       case 'hello':
       case 'hi':
-        sendHiMessage(senderID);
+      let url = "https://media2.giphy.com/media/l3q2GDh3wQqVWSiGY/giphy.gif";
+      //  getBasicInfo(senderID);
+        sendHiMessage(senderID,url);
         break;
       case 'start':
         sendButtonMessage(senderID)
@@ -89,7 +116,7 @@ function receivedMessage(event) {
         break;
 
       default:
-        sendTextMessage(senderID, messageText);
+        sendTextMessage(senderID, "Type \'start\' to start the challenge");
     }
   } else if (messageAttachments) {
     sendTextMessage(senderID, "Message with attachment received");
@@ -127,8 +154,9 @@ function receivedPostback(event) {
     rounds = 9
     //console.log("rounds in postback"+rounds);
 
-    sendTextMessage(senderID, 'challenge of 10 questions selected')
-    sendToQuickReply(event)
+    sendTextMessage(senderID, 'challenge of 10 questions selected');
+    sendHiMessage(senderID,"https://i0.wp.com/www.the-arcade.ie/wp-content/uploads/2015/06/lets-do-this-ucas-gif.gif");
+    sendToQuickReply(event);
 
 
 
@@ -137,7 +165,24 @@ function receivedPostback(event) {
   if (event.postback.payload === 'PAYLOAD:20') {
     rounds = 19
     sendTextMessage(senderID, 'challenge of 20 questions selected')
-    sendQuickReply(senderID)
+    sendHiMessage(senderID,"https://i0.wp.com/www.the-arcade.ie/wp-content/uploads/2015/06/lets-do-this-ucas-gif.gif");
+    sendToQuickReply(event)
+
+
+  }
+  if (event.postback.payload ==='PAYLOAD:get_started'){
+
+
+    request('https://graph.facebook.com/v2.6/'+senderID+'?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token='+process.env.token,
+            {json: true},(err,res,body) =>{
+              if(err){ return console.log(err);}
+              //console.log("body:"+body);
+              first_name = body.first_name;
+              last_name = body.last_name;
+              console.log("first_name:"+first_name+"\nlast_name:"+last_name);
+              sendTextMessage(senderID,'Welcome '+first_name+' '+last_name+' \n Type \'start\' to start challenge')
+            })
+    //sendTextMessage(senderID,'Welcome '+first_name+' '+last_name+' \n Type \'start\' to start challenge');
 
 
   }
@@ -209,8 +254,18 @@ function receivedAccountLink(event) {
   console.log("Received account link event with for user %d with status %s " +
     "and auth code %s ", senderID, status, authCode);
 }
+function getBasicInfo(senderID){
+  request('https://graph.facebook.com/v2.6/'+senderID+'?fields=first_name,last_name,profile_pic,locale,timezone,gender&access_token='+process.env.token,
+          {json: true},(err,res,body) =>{
+            if(err){ return console.log(err);}
+            //console.log("body:"+body);
+            first_name = body.first_name;
+            last_name = body.last_name;
+            console.log("first_name:"+first_name+"\nlast_name:"+last_name);
+          })
+}
 
-function sendHiMessage(recipientId) {
+function sendHiMessage(recipientId,url) {
   var messageData = {
     recipient: {
       id: recipientId
@@ -219,7 +274,7 @@ function sendHiMessage(recipientId) {
       "attachment": {
         "type": "image",
         "payload": {
-          "url": "https://media2.giphy.com/media/l3q2GDh3wQqVWSiGY/giphy.gif",
+          "url": url,
           "is_reusable": true
         }
       }
@@ -239,7 +294,7 @@ function sendQuickReply(recipientId, value, c) {
       id: recipientId
     },
     message: {
-      "text": "Definition:"+value[c].results[0].definition+"\n\nChoose from below words:",
+      "text": "Definition: "+value[c].results[0].definition+"\n\nChoose from below words:",
       "quick_replies": [{
         "content_type": "text",
         "title": value[0].word,
@@ -346,3 +401,4 @@ module.exports.receivedPostback = receivedPostback
 module.exports.receivedDeliveryConfirmation = receivedDeliveryConfirmation
 module.exports.receivedAccountLink = receivedAccountLink
 module.exports.receivedMessageRead = receivedMessageRead
+module.exports.addGetStarted = addGetStarted;
